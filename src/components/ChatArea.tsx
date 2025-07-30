@@ -260,6 +260,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                     </button>
                   </>
                 )}
+                {hasWebhooks && (
+                  <p className="mt-1 text-sm text-green-700 dark:text-green-300">
+                    ✅ Los webhooks están configurados y funcionando correctamente. 
+                    Tus mensajes serán procesados automáticamente.
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -322,6 +322,8 @@ function App() {
           onSendMessage={handleSendMessage}
           selectedDocuments={selectedDocuments}
           onOpenDocuments={() => setIsDocumentSidebarOpen(true)}
+          hasWebhooks={webhooks.filter(w => w.type === 'chat' && w.active).length > 0}
+          onOpenSettings={() => setIsAdminPanelOpen(true)}
         />
       </div>
 
