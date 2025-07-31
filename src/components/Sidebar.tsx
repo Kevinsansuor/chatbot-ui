@@ -173,6 +173,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setShowDropdown(null)}
         />
       )}
+
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Tema
