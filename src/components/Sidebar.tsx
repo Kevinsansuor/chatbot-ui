@@ -171,10 +171,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           className="fixed inset-0 z-5"
           onClick={() => setShowDropdown(null)}
-              </div>
+        />
       )}
-
-      </div>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
