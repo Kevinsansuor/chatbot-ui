@@ -174,12 +174,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
         <div className="flex items-center justify-between mb-4">
-        {/* Theme Section */}
-        <div className="w-full">
-          <div className="flex items-center justify-between w-full">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Tema
-            </span>
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tema
+          </span>
+          <div className="flex items-center gap-2">
             <button
               onClick={onThemeToggle}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -193,7 +192,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* User Section */}
         {user && (
           <div className="flex items-center gap-3">
             <img
