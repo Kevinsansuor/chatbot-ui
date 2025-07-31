@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, MessageSquare, Settings, Moon, Sun } from 'lucide-react';
+import { Search, Plus, MessageSquare, Settings, Moon, Sun, MoreVertical, Edit3, Trash2, Check, X } from 'lucide-react';
 import { Chat, User } from '../types';
 
 interface SidebarProps {
@@ -8,6 +8,8 @@ interface SidebarProps {
   activeChat: string | null;
   onChatSelect: (chatId: string) => void;
   onNewChat: () => void;
+  onChatDelete: (chatId: string) => void;
+  onChatRename: (chatId: string, newTitle: string) => void;
   user: User | null;
   onSettingsClick: () => void;
   onThemeToggle: () => void;
@@ -20,12 +22,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeChat,
   onChatSelect,
   onNewChat,
+  onChatDelete,
+  onChatRename,
   user,
   onSettingsClick,
   onThemeToggle,
   isDark,
 }) => {
+  const [editingChat, setEditingChat] = React.useState<string | null>(null);
+  const [editTitle, setEditTitle] = React.useState('');
+  const [showDropdown, setShowDropdown] = React.useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleStartEdit = (chat: Chat) => {
+    setEditingChat(chat.id);
+    setEditTitle(chat.title);
+    setShowDropdown(null);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingChat && editTitle.trim()) {
+      onChatRename(editingChat, editTitle.trim());
+    }
+    setEditingChat(null);
+    setEditTitle('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChat(null);
+    setEditTitle('');
+  };
+
+  const handleDelete = (chatId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este chat?')) {
+      onChatDelete(chatId);
+    }
+    setShowDropdown(null);
+  };
 
   return (
     <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full">
@@ -55,22 +89,91 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-2">
           {chats.map((chat) => (
-            <button
+            <div
               key={chat.id}
-              onClick={() => onChatSelect(chat.id)}
-              className={`w-full text-left p-3 rounded-lg transition-colors ${
+              className={`relative group rounded-lg transition-colors ${
                 activeChat === chat.id
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate text-sm">{chat.title}</span>
-              </div>
-            </button>
+              {editingChat === chat.id ? (
+                <div className="flex items-center gap-2 p-3">
+                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveEdit();
+                      if (e.key === 'Escape') handleCancelEdit();
+                    }}
+                    className="flex-1 text-sm bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSaveEdit}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 p-3">
+                  <button
+                    onClick={() => onChatSelect(chat.id)}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate text-sm">{chat.title}</span>
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDropdown(showDropdown === chat.id ? null : chat.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-opacity"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    {showDropdown === chat.id && (
+                      <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                        <button
+                          onClick={() => handleStartEdit(chat)}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(chat.id)}
+                          className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
+      </div>
+
+      {/* Click outside handler */}
+      {showDropdown && (
+        <div
+          className="fixed inset-0 z-5"
+          onClick={() => setShowDropdown(null)}
+              </div>
+      )}
+
       </div>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">

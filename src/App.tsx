@@ -122,13 +122,30 @@ function App() {
   const createNewChat = () => {
     const newChat: Chat = {
       id: Date.now().toString(),
-      title: 'Chat title',
+      title: 'Nuevo Chat',
       messages: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     setChats(prev => [newChat, ...prev]);
     setActiveChat(newChat.id);
+  };
+
+  const handleChatDelete = (chatId: string) => {
+    setChats(prev => prev.filter(chat => chat.id !== chatId));
+    if (activeChat === chatId) {
+      setActiveChat(null);
+    }
+  };
+
+  const handleChatRename = (chatId: string, newTitle: string) => {
+    setChats(prev =>
+      prev.map(chat =>
+        chat.id === chatId
+          ? { ...chat, title: newTitle, updatedAt: new Date() }
+          : chat
+      )
+    );
   };
 
   const handleSendMessage = async (content: string, selectedDocSources?: string[]) => {
@@ -306,6 +323,8 @@ function App() {
           activeChat={activeChat}
           onChatSelect={setActiveChat}
           onNewChat={createNewChat}
+          onChatDelete={handleChatDelete}
+          onChatRename={handleChatRename}
           user={user}
           onSettingsClick={() => setIsAdminPanelOpen(true)}
           onThemeToggle={toggleDarkMode}
