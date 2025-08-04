@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, FileText, LogOut } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { ChatArea } from './components/ChatArea';
 import { DocumentSidebar } from './components/DocumentSidebar';
@@ -54,7 +54,7 @@ const getFileCategory = (mimeType: string): string => {
 
 function App() {
   const { theme, toggleDarkMode, toggleGrayscale } = useTheme();
-  const { user, isLoginModalOpen, setIsLoginModalOpen, login, loginAsUser, logout } = useAuth();
+  const { user, isLoginModalOpen, setIsLoginModalOpen, login, loginAsUser } = useAuth();
   const { webhooks, addWebhook, updateWebhook, deleteWebhook, sendToWebhook } = useWebhooks();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -180,32 +180,40 @@ function App() {
         timestamp: new Date().toISOString(),
       };
 
+      // Enviar mensaje al webhook y obtener respuesta
       const responses = await sendToWebhook('chat', webhookData);
 
-      // Simulate bot response
-      setTimeout(() => {
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: selectedDocs.length > 0
-            ? `Las cualidades de este documento son estas, otras, algunas y estas otras.`
-            : `I understand your message: "${content}". How can I help you further?`,
-          timestamp: new Date(),
-          isUser: false,
-          sources: selectedDocs.map(doc => ({ name: doc.name, type: doc.type })),
-        };
+      // Procesar la respuesta del webhook
+      let responseContent = '';
+      if (Array.isArray(responses) && responses.length > 0) {
+        const firstResponse = responses[0];
+        if (firstResponse.status === 'fulfilled' && firstResponse.value) {
+          // Obtener la respuesta de la propiedad 'response' del webhook
+          responseContent = firstResponse.value.response || '';
+          console.log('Respuesta del webhook:', firstResponse.value); // Para depuración
+        }
+      }
 
-        setChats(prev =>
-          prev.map(chat =>
-            chat.id === activeChat
-              ? {
-                ...chat,
-                messages: [...chat.messages, botMessage],
-                updatedAt: new Date(),
-              }
-              : chat
-          )
-        );
-      }, 1000);
+      // Crear mensaje del bot con la respuesta
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: responseContent || 'Error: No se recibió respuesta del servidor',
+        timestamp: new Date(),
+        isUser: false,
+        sources: selectedDocs.map(doc => ({ name: doc.name, type: doc.type })),
+      };
+
+      setChats(prev =>
+        prev.map(chat =>
+          chat.id === activeChat
+            ? {
+              ...chat,
+              messages: [...chat.messages, botMessage],
+              updatedAt: new Date(),
+            }
+            : chat
+        )
+      );
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -222,7 +230,7 @@ function App() {
         }
       }
 
-      // Crear documentos nuevos
+      // Crear documentos nuevos con estado 'loading'
       const newDocs = files.map(file => ({
         id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
         name: file.name,
@@ -230,11 +238,11 @@ function App() {
         size: file.size,
         uploadedAt: new Date(),
         selected: false,
+        status: 'loading' as const,
       }));
 
-      // Actualizar documentos
+      // Actualizar documentos con estado de carga
       setDocuments(prev => {
-        // Verificar límite total de documentos
         if (prev.length + files.length > 100) {
           alert('Se excedería el límite máximo de documentos');
           return prev;
@@ -244,46 +252,59 @@ function App() {
 
       // Preparar los metadatos para cada archivo
       const webhookDataArray = files.map((file, index) => ({
-        // Basic file information
         filename: file.name,
         originalName: file.name,
         type: file.type,
         mimeType: file.type,
         size: file.size,
         sizeFormatted: formatFileSize(file.size),
-
-        // File analysis
         extension: getFileExtension(file.name),
         isPDF: file.type === 'application/pdf',
         isImage: file.type.startsWith('image/'),
         isText: file.type.startsWith('text/'),
         isDocument: isDocumentType(file.type),
-
-        // Timestamps
         timestamp: new Date().toISOString(),
         uploadedAt: new Date().toISOString(),
-
-        // Additional metadata
         documentId: newDocs[index].id,
         category: getFileCategory(file.type),
-
-        // Browser information
         lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null,
         webkitRelativePath: (file as any).webkitRelativePath || '',
-
-        // User context
         userId: user?.id || 'anonymous',
         userRole: user?.isAdmin ? 'admin' : 'user',
         userName: user?.name || 'Unknown User'
       }));
 
       // Enviar todos los archivos en una sola petición
-      await sendToWebhook('upload', webhookDataArray, files);
+      const responses = await sendToWebhook('upload', webhookDataArray, files);
+
+      // Actualizar estado de los documentos según la respuesta
+      setDocuments(prev => {
+        return prev.map(doc => {
+          const newDocIndex = newDocs.findIndex(d => d.id === doc.id);
+          if (newDocIndex !== -1) {
+            const response = responses[newDocIndex];
+            if (response?.status === 'fulfilled' && response.value?.response === 'documents uploaded') {
+              return { ...doc, status: 'success' };
+            } else {
+              return { ...doc, status: 'error' };
+            }
+          }
+          return doc;
+        });
+      });
+
     } catch (error) {
       console.error('Error uploading document:', error);
       alert(error instanceof Error ? error.message : 'Error al subir el documento');
+      const newDocs = files.map((file) => ({ id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9), name: file.name })); // Placeholder for newDocs
+      // Marcar todos los documentos nuevos como error
+      setDocuments(prev => {
+        const newDocIds = newDocs.map(d => d.id);
+        return prev.map(doc => 
+          newDocIds.includes(doc.id) ? { ...doc, status: 'error' } : doc
+        );
+      });
     }
-
   };
 
   const handleDocumentSelect = (documentId: string) => {
@@ -318,7 +339,7 @@ function App() {
       {/* Left Sidebar */}
       <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative z-30 h-full`}>
         <Sidebar
-          isOpen={true}
+          isOpen={isSidebarOpen}
           chats={chats}
           activeChat={activeChat}
           onChatSelect={setActiveChat}
@@ -350,7 +371,7 @@ function App() {
       {isDocumentSidebarOpen && (
         <div className="fixed lg:relative z-20 h-full">
           <DocumentSidebar
-            isOpen={true}
+            isOpen={isDocumentSidebarOpen}
             onClose={() => setIsDocumentSidebarOpen(false)}
             documents={documents}
             onDocumentSelect={handleDocumentSelect}

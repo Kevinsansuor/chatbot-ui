@@ -26,6 +26,7 @@ export interface Document {
   size: number;
   uploadedAt: Date;
   selected: boolean;
+  status?: 'loading' | 'success' | 'error';
 }
 
 export interface WebhookConfig {

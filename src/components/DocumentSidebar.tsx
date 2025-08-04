@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, FileText, File, MoreVertical, Trash2 } from 'lucide-react';
+import { X, Upload, FileText, File, MoreVertical, Trash2, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Document } from '../types';
 
 interface DocumentSidebarProps {
@@ -33,29 +33,56 @@ export const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
   };
 
   const processFiles = (files: File[]) => {
-    const validFiles = files.slice(0, 5).filter(validateFile); // Limitar a 5 archivos
+    const validFiles = files.slice(0, 5).filter(validateFile);
     if (files.length > 5) {
       alert('Solo se pueden subir hasta 5 archivos a la vez');
     }
-    validFiles.forEach(file => onDocumentUpload(file));
+    onDocumentUpload(validFiles);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    
     const files = Array.from(e.dataTransfer.files);
-    onDocumentUpload(files);
+    processFiles(files);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    onDocumentUpload(files);
+    processFiles(files);
   };
 
   const getFileIcon = (type: string) => {
     if (type.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
     return <File className="w-5 h-5 text-blue-500" />;
+  };
+
+  const getStatusIndicator = (status?: 'loading' | 'success' | 'error') => {
+    switch (status) {
+      case 'loading':
+        return (
+          <span className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Subiendo...
+          </span>
+        );
+      case 'success':
+        return (
+          <span className="flex items-center text-xs text-green-500 dark:text-green-400">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Subido
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="flex items-center text-xs text-red-500 dark:text-red-400">
+            <XCircle className="w-3 h-3 mr-1" />
+            Error
+          </span>
+        );
+      default:
+        return null;
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -100,9 +127,12 @@ export const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {doc.name}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatFileSize(doc.size)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatFileSize(doc.size)}
+                  </p>
+                  {getStatusIndicator(doc.status)}
+                </div>
               </div>
               <div className="relative group">
                 <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors">
@@ -114,7 +144,7 @@ export const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
                     className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    Eliminar
                   </button>
                 </div>
               </div>
@@ -139,7 +169,7 @@ export const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
         >
           <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-            Upload Document
+            Subir documento
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             pdf/word/images/txt/excel...
@@ -156,7 +186,7 @@ export const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
             htmlFor="file-upload"
             className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg cursor-pointer transition-colors"
           >
-            Choose Files
+            Seleccionar archivos
           </label>
         </div>
       </div>

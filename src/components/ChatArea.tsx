@@ -1,16 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MoreHorizontal, ThumbsUp, ThumbsDown, Copy, Bot, User, FileText, AlertCircle, ChevronRight, X, CheckCircle } from 'lucide-react';
-import { Message, Chat } from '../types';
+import { Chat } from '../types';
 import './ChatArea.css';
 
-interface Webhook {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  environment: string;
-  active: boolean;
-}
 
 interface ChatAreaProps {
   chat: Chat | null;
@@ -214,10 +206,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
       <div className="flex-shrink-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
         {showWebhookMessage && (
-          <div className={`mb-4 p-4 ${hasWebhooks 
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+          <div className={`mb-4 p-4 ${hasWebhooks
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
             : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
-          } border rounded-lg`}>
+            } border rounded-lg`}>
             <div className="flex items-start gap-3">
               {hasWebhooks ? (
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-500 flex-shrink-0 mt-0.5" />
@@ -226,12 +218,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               )}
               <div className="flex-1">
                 <div className="flex items-start justify-between">
-                  <h3 className={`text-sm font-medium ${hasWebhooks 
-                    ? 'text-green-800 dark:text-green-200' 
+                  <h3 className={`text-sm font-medium ${hasWebhooks
+                    ? 'text-green-800 dark:text-green-200'
                     : 'text-yellow-800 dark:text-yellow-200'}`}>
                     {hasWebhooks ? 'Webhook configurado correctamente' : 'Configuración necesaria'}
                   </h3>
-                  <button 
+                  <button
                     onClick={() => setShowWebhookMessage(false)}
                     className={`p-1 -mt-1 -mr-1 rounded-lg transition-colors ${hasWebhooks
                       ? 'hover:bg-green-100 dark:hover:bg-green-800'
@@ -245,7 +237,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                 {!hasWebhooks && (
                   <>
                     <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                      Para que el chat funcione correctamente, necesitas configurar al menos un webhook. 
+                      Para que el chat funcione correctamente, necesitas configurar al menos un webhook.
                       Sigue estos pasos:
                     </p>
                     <ol className="mt-2 ml-4 space-y-2 text-sm text-yellow-700 dark:text-yellow-300 list-decimal">
@@ -253,7 +245,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                       <li>Ve a la sección de webhooks</li>
                       <li>Configura al menos un webhook para el chat</li>
                     </ol>
-                    <button 
+                    <button
                       onClick={onOpenSettings}
                       className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100">
                       Abrir configuración <ChevronRight className="w-4 h-4" />
